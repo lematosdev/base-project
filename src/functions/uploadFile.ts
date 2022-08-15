@@ -1,5 +1,6 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+
+import getSignedUrl from './getSignedURL';
 
 const client = new S3Client({ region: 'us-east-1' });
 
@@ -13,9 +14,11 @@ export default async (base64: string, fileName: string): Promise<String> => {
     ContentType: 'image/png',
   });
 
-  const url = await getSignedUrl(client, command, {
-    expiresIn: 3600,
-  });
-
-  return url;
+  try {
+    await client.send(command);
+    const url = await getSignedUrl(fileName);
+    return url;
+  } catch (err) {
+    throw new Error(err.message);
+  }
 };
